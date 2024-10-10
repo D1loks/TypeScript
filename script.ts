@@ -1,3 +1,4 @@
+import { error } from 'console';
 import { MongoClient } from 'mongodb';
 import fetch from 'node-fetch';
 const express = require('express');
@@ -25,11 +26,20 @@ const ProductSchema = {
       type: String,
       required: false
     }
-  }
+};
 
+const PasswordSchema = {
+    'y_password': {
+        type: String,
+        required: true
+    }
+};
 
 const Product = mongoose.model('products', new mongoose.Schema(ProductSchema));
+const Password = mongoose.model('passwords', new mongoose.Schema(PasswordSchema));
+
 insertProduct();
+insertPassword();
 
 async function insertProduct() {
     const phone = new Product({
@@ -40,6 +50,13 @@ async function insertProduct() {
     await phone.save()
 }
 
+async function insertPassword() {
+    const newPassword = new Password ({
+        y_password: 'BoscoTestPassword'
+    })
+    await newPassword.save()
+}
+
 const updateProductPrice = async (id, newPrice) => {
     newPrice = parseFloat(newPrice);
     const product = await Product.findById(id);
@@ -47,6 +64,7 @@ const updateProductPrice = async (id, newPrice) => {
     await product.save();
     return product;
 };
+
 const deleteProduct = async (id) => {
     const product = await Product.findById(id);
     await product.deleteOne();
@@ -96,10 +114,23 @@ async function main() {
                 res.status(500).json({ message: 'Error', error: error.message });
             }
         });
-        
+
+        app.get('/auntification/:x_password', async (req, res) => {
+            try {
+                const db_pass = await Password.findById("6707a8f2b396b8c3855ba0b7", 'y_password');
+                if (db_pass.y_password === req.params.x_password) {
+                    return res.json({ message: 'Password correct, auntification complete' });
+                } else {
+                    return res.status(403).json({ message: 'Forbidden: Incorrect password' });
+                }
+            } catch (error) {
+                return res.status(500).json({ message: 'Error', error: error.message });
+            }
+        });
     }
     catch (err) {
         console.error(err);
     }
   
 }
+
